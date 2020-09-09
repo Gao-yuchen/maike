@@ -1,17 +1,17 @@
 <template>
     <div class="login-wrap">
-        <div class="ms-login">
+        <div class="ms-login" >
             <div class="ms-title">后台管理系统</div>
             <el-form :model="param" :rules="rules" ref="login" label-width="0px" class="ms-content">
-                <el-form-item prop="username">
-                    <el-input v-model="param.username" placeholder="username">
+                <el-form-item prop="name">
+                    <el-input v-model="param.name" placeholder="用户名">
                         <el-button slot="prepend" icon="el-icon-lx-people"></el-button>
                     </el-input>
                 </el-form-item>
                 <el-form-item prop="password">
                     <el-input
                         type="password"
-                        placeholder="password"
+                        placeholder="密码"
                         v-model="param.password"
                         @keyup.enter.native="submitForm()"
                     >
@@ -21,19 +21,20 @@
                 <div class="login-btn">
                     <el-button type="primary" @click="submitForm()">登录</el-button>
                 </div>
-                <p class="login-tips">Tips : 用户名和密码随便填。</p>
+                
             </el-form>
         </div>
     </div>
 </template>
 
 <script>
+import {logincheck} from "../../api/index"
 export default {
     data: function() {
         return {
             param: {
-                username: 'admin',
-                password: '123123',
+                name: '',
+                password: '',
             },
             rules: {
                 username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -43,17 +44,28 @@ export default {
     },
     methods: {
         submitForm() {
-            this.$refs.login.validate(valid => {
-                if (valid) {
-                    this.$message.success('登录成功');
-                    localStorage.setItem('ms_username', this.param.username);
-                    this.$router.push('/');
-                } else {
-                    this.$message.error('请输入账号和密码');
-                    console.log('error submit!!');
-                    return false;
-                }
+            logincheck(this.param).then(returndata=>{
+                if(returndata.code=="200"){
+
+                    localStorage.setItem("token",returndata.info.token)
+                    setTimeout(function(){ 
+                        localStorage.removeItem("token")
+                     }, 86400000);
+                    this.$refs.login.validate(valid => {
+                    // console.log(valid)
+                    if (valid) {
+                        this.$message.success('登录成功');
+                        localStorage.setItem('ms_username', this.param.name);
+                        this.$router.push('/');
+                } 
             });
+                }else {
+                    this.$message.error('账号名密码错误');
+                    console.log('error submit!!');
+                    
+                }
+            }) 
+            
         },
     },
 };
@@ -64,8 +76,12 @@ export default {
     position: relative;
     width: 100%;
     height: 100%;
-    background-image: url(../../assets/img/login-bg.jpg);
-    background-size: 100%;
+    background-image: url(../../assets/img/loginbg.jpg);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+.el-button{
+    font-size: 20px;
 }
 .ms-title {
     width: 100%;
@@ -82,7 +98,10 @@ export default {
     width: 350px;
     margin: -190px 0 0 -175px;
     border-radius: 5px;
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(42, 65, 75, 0.6) ;
+    background-size:100% 100% ;
+    
+    
     overflow: hidden;
 }
 .ms-content {
